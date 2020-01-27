@@ -1,7 +1,7 @@
 # AJC-BK Stunden/Vertretungsplan
-Android App für den Vertretungsplan
+Android App fÃ¼r den Vertretungsplan
 
-# Kurze URL
+# Download URL
 https://git.io/JvmKt
 
 # Author
