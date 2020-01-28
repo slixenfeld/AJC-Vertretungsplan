@@ -8,7 +8,7 @@ https://git.io/JvY3Y
 https://github.com/slxfld/AJC-Vertretungsplan/releases
 
 # Lizenz
-GNU Gpl v3.0
+GNU GPL v3.0
 
 # Author
 *2020 slxfld*
