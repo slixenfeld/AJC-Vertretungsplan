@@ -1,11 +1,8 @@
 ﻿# AJC-BK Stunden/Vertretungsplan
-Android App für den Vertretungsplan
+Android App zum aufrufen des ajc-bk Vertretungsplans
 
-# Download URL
+# Download Link
 https://git.io/JvY3Y
-
-# Versionen
-https://github.com/slxfld/AJC-Vertretungsplan/releases
 
 # Lizenz
 GNU GPL v3.0
