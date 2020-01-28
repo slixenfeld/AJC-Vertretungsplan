@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button editButton;
     EditText input;
 
-    final String Version = "1.1";
+    final String Version = "1.2";
     final String username = "";
     final String password = "";
 
