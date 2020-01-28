@@ -2,7 +2,7 @@
 Android App für den Vertretungsplan
 
 # Download URL
-https://git.io/JvYOA
+https://git.io/JvY3Y
 
 # Versionen
 https://github.com/slxfld/AJC-Vertretungsplan/releases
