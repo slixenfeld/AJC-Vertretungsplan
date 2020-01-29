@@ -2,7 +2,7 @@
 Android App zum einfachen aufrufen des Vertretungsplans.
 
 # Erste Benutzung
-Die richtige Klasse wird mit dem Klasse Button eingegeben.</br>
+Die richtige Klasse wird mit `Klasse` eingegeben.</br>
 Groß/Kleinschreibung müssen stimmen, Beispiel:</br>
 <li>WGY1a</li>
 <li>WHH1d</li>
