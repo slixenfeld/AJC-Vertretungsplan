@@ -4,7 +4,6 @@ Android App zum einfachen aufrufen des Vertretungsplans.
 # Erste Benutzung
 Die richtige Klasse wird mit dem Klasse Button eingegeben.</br>
 Groß/Kleinschreibung müssen stimmen, Beispiel:</br>
-<li>AVBa</li>
 <li>WGY1a</li>
 <li>WHH1d</li>
 <li>ITA2a</li>
