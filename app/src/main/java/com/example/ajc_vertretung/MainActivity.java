@@ -15,6 +15,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,16 +32,22 @@ import java.util.Calendar;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String FILE_NAME = "ajcv-config.txt";
+    final String Version = "1.3.1";
+    final String username = "";
+    final String password = "";
     WebView webView;
     Button helpButton;
     Button editButton;
     EditText input;
 
-    final String Version = "1.2";
-    final String username = "";
-    final String password = "";
+    ImageButton lastButton;
+    ImageButton nextButton;
+    int button_woche = 0;
+    boolean display_woche_msg = false;
 
     String user_Klasse = "";
+
+    int woche;
 
     public void loadKlasseFromConfig() {
         FileInputStream fis = null;
@@ -82,8 +89,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             fos.write(text.getBytes());
 
             input.getText().clear();
-            Toast.makeText(this, "Saved to " + getFilesDir() + "/" + FILE_NAME,
-                    Toast.LENGTH_LONG).show();
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -121,29 +127,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         user_Klasse = klasse;
     }
 
+    private void setup_WebView(WebView wv) {
+        wv.getSettings().setJavaScriptEnabled(true);
+        wv.getSettings().setAppCacheEnabled(true);
+        wv.getSettings().setDomStorageEnabled(true);
+        wv.getSettings().setSupportZoom(true);
+        wv.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+        wv.getSettings().setBuiltInZoomControls(true);
+        wv.getSettings().setUseWideViewPort(true);
+        wv.setInitialScale(145);
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        webView = (WebView) findViewById(R.id.web);
-        helpButton = (Button) findViewById(R.id.button);
-        editButton = (Button) findViewById(R.id.button2);
-
-        helpButton.setOnClickListener(this);
-        editButton.setOnClickListener(this);
-
-        loadKlasseFromConfig();
-
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setAppCacheEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
-        webView.getSettings().setSupportZoom(true);
-        webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
-        webView.getSettings().setBuiltInZoomControls(true);
-
-        webView.setWebViewClient(new WebViewClient(){
+        wv.setWebViewClient(new WebViewClient(){
 
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
@@ -157,52 +151,107 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 handler.proceed(username, password);
             }
         });
+    }
 
+
+    private void load_Website(WebView wv) {
+        loadKlasseFromConfig();
 
         Calendar cal = Calendar.getInstance();
-        int woche = cal.get(Calendar.WEEK_OF_YEAR);
+        woche = cal.get(Calendar.WEEK_OF_YEAR);
         String woche_string = "";
         if (woche < 10) {
-            woche_string = "0" + woche;
+            woche_string = "0" + (woche+button_woche);
         }else{
-            woche_string = ""+woche;
+            woche_string = ""+(woche+button_woche);
         }
 
-        Toast.makeText(getApplicationContext(),user_Klasse,Toast.LENGTH_LONG).show();
+        if(display_woche_msg) {
+            if (button_woche == 1) {
+                Toast.makeText(getApplicationContext(), "nächste Woche", Toast.LENGTH_SHORT).show();
+            } else if (button_woche == -1) {
+                Toast.makeText(getApplicationContext(), "letzte Woche", Toast.LENGTH_SHORT).show();
+            } else if (button_woche == 0) {
+                Toast.makeText(getApplicationContext(), "diese Woche", Toast.LENGTH_SHORT).show();
+            } else if (button_woche < -1) {
+                String vor_string = "";
+                for (int i = 1; i < (-button_woche); i++) {
+                    vor_string += "vor";
+                }
+                vor_string += "letzte Woche";
+                Toast.makeText(getApplicationContext(), vor_string, Toast.LENGTH_SHORT).show();
+            } else if (button_woche > 1) {
+                String nach_string = "";
+                for (int i = 1; i < button_woche; i++) {
+                    nach_string += "über";
+                }
+                nach_string += "nächste Woche";
+                Toast.makeText(getApplicationContext(), nach_string, Toast.LENGTH_SHORT).show();
+            }
+        }
 
         webView.loadUrl("https://ajc-bk.dyndns.org:8008/Vertretung-Online");
         try {
             String postData = "KL=1&klassen="+user_Klasse+"&woche="+woche_string;
-         webView.postUrl("https://ajc-bk.dyndns.org:8008/Vertretung-Online/stdplan_anzeige.php",postData.getBytes());
+            webView.postUrl("https://ajc-bk.dyndns.org:8008/Vertretung-Online/stdplan_anzeige.php",postData.getBytes());
         }catch(Exception e){}
-
 
     }
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        webView = (WebView) findViewById(R.id.web);
+        helpButton = (Button) findViewById(R.id.button);
+        editButton = (Button) findViewById(R.id.button2);
+        lastButton = (ImageButton) findViewById(R.id.imageButton);
+        nextButton = (ImageButton) findViewById(R.id.imageButton2);
+
+
+        helpButton.setOnClickListener(this);
+        editButton.setOnClickListener(this);
+        lastButton.setOnClickListener(this);
+        nextButton.setOnClickListener(this);
+
+
+        setup_WebView(webView);
+
+        load_Website(webView);
+    }
+
+    @Override
     public void onClick(View v) {
+        AlertDialog alert;
         switch(v.getId())
         {
             case R.id.button:
                 AlertDialog.Builder a_builder = new AlertDialog.Builder(this);
-                a_builder.setMessage(Html.fromHtml("Github: <a href=\"https://github.com/slxfld/AJC-Vertretungsplan\">slxfld/AJC-Vertretungsplan</a>" +
-                        "\n" +
-                        "Version: "+Version))
+                a_builder.setTitle("App Info");
+                a_builder.setMessage(Html.fromHtml("<html><body> " +
+                                "Github: <a href=\"https://github.com/slxfld/AJC-Vertretungsplan\">slxfld/AJC-Vertretungsplan</a> " +
+                                "<br/>" +
+                                "Download: <a href=\"https://git.io/JvY3Y\">git.io/JvY3Y</a> </body></html>"+
+                                "<br/>" +
+                                "Version: "+Version
+                ))
 
 
                         .setCancelable(true);
 
-                AlertDialog alert = a_builder.create();
+                alert = a_builder.create();
                 alert.show();
 
                 ((TextView)alert.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+
                 break;
 
             case R.id.button2:
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-              //  builder.setTitle("Klasse");
-                builder.setMessage("Bitte Klasse eingeben:");
+                builder.setMessage("Bitte Klasse eingeben, Beispiel: WGY1b, ITA2b, IFIS1, ...");
 
                 input = new EditText(this);
                 builder.setView(input);
@@ -214,14 +263,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         String klasse =  input.getText().toString();
                         saveKlasseToConfig();
                         Toast.makeText(getApplicationContext(),klasse,Toast.LENGTH_LONG).show();
-                        System.exit(0);
+                        display_woche_msg = false;
+                        load_Website(webView);
                     }
                 });
 
-                AlertDialog ad = builder.create();
+                alert = builder.create();
+                alert.show();
 
-                ad.show();
+                break;
 
+            case R.id.imageButton:
+                button_woche--;
+                display_woche_msg = true;
+                load_Website(webView);
+                break;
+
+            case R.id.imageButton2:
+
+                button_woche++;
+                display_woche_msg = true;
+                load_Website(webView);
                 break;
 
         }
