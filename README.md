@@ -1,15 +1,14 @@
 ﻿# AJC-BK Stunden/Vertretungsplan
-Android App zum einfachen aufrufen des Vertretungsplans
+Android App zum einfachen aufrufen des Vertretungsplans.
 
 # Erste Benutzung
 Die richtige Klasse wird mit dem Klasse Button eingegeben.</br>
 Groß/Kleinschreibung müssen stimmen, Beispiel:</br>
 <li>AVBa</li>
 <li>WGY1a</li>
-<li>WGY3b</li>
+<li>WHH1d</li>
 <li>ITA2a</li>
 <li>IFIS1</li>
-
 
 # Download Link
 https://git.io/JvY3Y
