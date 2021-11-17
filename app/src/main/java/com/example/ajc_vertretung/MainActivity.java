@@ -215,7 +215,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 "<br/>" +
                                 "Download: <a href=\"https://git.io/JvY3Y\">git.io/JvY3Y</a> </body></html>"+
                                 "<br/>" +
-                                "Version: "+Version
+                                "Version: "+Version +
+                                "<p></p>" +
+                                "Die Login Daten befinden sich auf einem Zettel hinter der Glasscheibe im Schulgebäude 1."
                 )).setCancelable(true);
 
                 alert = a_builder.create();
