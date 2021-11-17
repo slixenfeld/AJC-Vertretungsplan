@@ -73,6 +73,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             displayMsg( woche.getWocheString());
         }
 
+        displayMsg(configKlasse);
+
         webView.loadUrl("https://ajc-bk.dyndns.org:8008/Vertretung-Online");
         try {
             String postData = "KL=1&klassen="+configKlasse+"&woche="+woche.getWoche();
@@ -106,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setup_WebView(webView);
                 load_Website();
             } else {
-                Toast.makeText(getApplicationContext(), "Falsche Login Daten",Toast.LENGTH_LONG).show();
+                displayMsg("Falsche Login Daten");
             }
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -197,8 +199,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 input_Password.getText().toString(),
                 input_Klasse.getText().toString()
         );
-
-        Toast.makeText(getApplicationContext(), configKlasse,Toast.LENGTH_LONG).show();
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -266,9 +266,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 woche.displayWoche_msg = false;
                                 setup_WebView(webView);
                                 load_Website();
-                                Toast.makeText(getApplicationContext(), configKlasse,Toast.LENGTH_LONG).show();
                             } else {
-                                Toast.makeText(getApplicationContext(), "Falsche Login Daten",Toast.LENGTH_LONG).show();
+                                displayMsg("Falsche Login Daten");
                             }
                         } catch (NoSuchAlgorithmException e) {
                             e.printStackTrace();
