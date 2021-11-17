@@ -35,7 +35,7 @@ import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    final String Version = "1.5";
+    final String Version = "1.5.1";
 
     WebView webView;
     TextView textView;
