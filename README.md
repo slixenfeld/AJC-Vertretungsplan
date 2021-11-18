@@ -16,4 +16,4 @@ https://git.io/JvY3Y
 GNU GPL v3.0
 
 # Author
-*2020 slxfld*
+*2021 slxfld*
