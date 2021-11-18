@@ -4,12 +4,17 @@ import static com.example.ajc_vertretung.Md5Utility.md5Java;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.InputType;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
@@ -23,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -30,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collections;
 
 
@@ -37,28 +44,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     final String Version = "1.5.1";
 
-    WebView webView;
-    TextView textView;
-    Button helpButton;
-    ImageButton editButton;
-    EditText input_Klasse;
-    EditText input_Password;
-    EditText input_Username;
-    ImageButton lastButton;
-    ImageButton nextButton;
+    private WebView webView;
+    private TextView textView;
+    protected Button helpButton;
 
-    String configKlasse = "";
-    String configPassword = "";
-    String configUsername = "";
+    private EditText inputField_Klasse;
+    private EditText inputField_Password;
+    private EditText inputField_Username;
 
-    String passwordHash = "d074848ed641d3aaa124117b4860fcc3";
-    String usernameHash = "c7600c41f46cc2b77bf5787ca97e0bab";
+    private String configKlasse = "";
+    private String configPassword = "";
+    private String configUsername = "";
 
-    InputOutput io = new InputOutput();
+    public final String requestURL = "https://ajc-bk.dyndns.org:8008/Vertretung-Online/stdplan_anzeige.php";
+
+    public static final String CONFIG_FILE_NAME = "ajcv-config.txt";
+    public ArrayList<String> configLines = new ArrayList<>();
+
     Woche woche = new Woche();
 
-
     private boolean isLoginValid() throws NoSuchAlgorithmException {
+        String passwordHash = "d074848ed641d3aaa124117b4860fcc3";
+        String usernameHash = "c7600c41f46cc2b77bf5787ca97e0bab";
         return (md5Java(configUsername).equals(usernameHash) && md5Java(configPassword).equals(passwordHash));
     }
 
@@ -66,21 +73,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
+    private void displayNotification(String title, String message) {
+        @SuppressLint({"WrongConstant", "UnspecifiedImmutableFlag"})
+        PendingIntent pi = PendingIntent.getActivity(this,
+                0,
+                new Intent(this, MainActivity.class),
+                Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
+                .notify(0, new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setAutoCancel(true).setContentIntent(pi).build());
+    }
+
     private void load_Website() {
+
         loadConfig();
 
-        if(woche.displayWoche_msg) {
-            displayMsg( woche.getWocheString());
-        }
+        if(woche.displayWoche_msg) displayMsg(configKlasse + ", " + woche.getWocheString());
 
-        displayMsg(configKlasse);
-
-        webView.loadUrl("https://ajc-bk.dyndns.org:8008/Vertretung-Online");
         try {
-            String postData = "KL=1&klassen="+configKlasse+"&woche="+woche.getWoche();
-            webView.postUrl("https://ajc-bk.dyndns.org:8008/Vertretung-Online/stdplan_anzeige.php",postData.getBytes());
-        }catch(Exception e) {
-            e.printStackTrace();
+            String requestPayload = "KL=1&klassen="+configKlasse+"&woche="+woche.getAktuellewoche();
+            webView.postUrl(requestURL, requestPayload.getBytes());
+        } catch(Exception e) {
+            Log.e("Request Error", e.getMessage());
         }
     }
 
@@ -92,9 +110,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         webView = (WebView) findViewById(R.id.web);
         helpButton = (Button) findViewById(R.id.button);
-        editButton = (ImageButton) findViewById(R.id.button2);
-        lastButton = (ImageButton) findViewById(R.id.imageButton);
-        nextButton = (ImageButton) findViewById(R.id.imageButton2);
+        ImageButton editButton = (ImageButton) findViewById(R.id.button2);
+        ImageButton lastButton = (ImageButton) findViewById(R.id.imageButton);
+        ImageButton nextButton = (ImageButton) findViewById(R.id.imageButton2);
         textView = (TextView) findViewById(R.id.textView_woche);
 
         helpButton.setOnClickListener(this);
@@ -103,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         nextButton.setOnClickListener(this);
 
         loadConfig();
+
         try {
             if (isLoginValid()) {
                 setup_WebView(webView);
@@ -113,10 +132,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+
+
     }
 
     private void setup_WebView(WebView wv) {
         setWebViewConfig(wv);
+
         wv.setWebViewClient(new WebViewClient(){
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
@@ -126,9 +148,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
-                //Mit Logindaten anmelden
+                //Mit Login Daten anmelden
                 handler.proceed(configUsername, configPassword);
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                // URL Filter für HTML Processing
+               webView.loadUrl("javascript:HTMLOUT.processHTML(document.documentElement.outerHTML);");
+            }
+
         });
     }
 
@@ -136,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         FileOutputStream fos = null;
         String configText = username + ";" + password + ";" + klasse;
         try {
-            fos = openFileOutput(InputOutput.FILE_NAME, MODE_PRIVATE);
+            fos = openFileOutput(CONFIG_FILE_NAME, MODE_PRIVATE);
             fos.write(configText.getBytes());
         } catch (Exception ex){
             ex.printStackTrace(); } finally {
@@ -146,9 +175,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void loadConfig() {
         FileInputStream fis = null;
-        io.configLines.clear();
+        configLines.clear();
         try {
-            fis = openFileInput(InputOutput.FILE_NAME);
+            fis = openFileInput(CONFIG_FILE_NAME);
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader br = new BufferedReader(isr);
             StringBuilder sb = new StringBuilder();
@@ -158,11 +187,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sb.append(text);
             }
             String loaded = sb.toString();
-            Collections.addAll(io.configLines, loaded.split(";"));
+            Collections.addAll(configLines, loaded.split(";"));
 
-            configUsername = io.configLines.get(0);
-            configPassword = io.configLines.get(1);
-            configKlasse = io.configLines.get(2);
+            configUsername = configLines.get(0);
+            configPassword = configLines.get(1);
+            configKlasse = configLines.get(2);
 
         } catch (Exception ex){
             ex.printStackTrace();
@@ -177,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     private void setWebViewConfig(WebView wv) {
         wv.getSettings().setJavaScriptEnabled(true);
         wv.getSettings().setAppCacheEnabled(true);
@@ -185,19 +215,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         wv.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         wv.getSettings().setBuiltInZoomControls(true);
         wv.getSettings().setUseWideViewPort(true);
+        wv.addJavascriptInterface(new HTMLProcessorInterface(), "HTMLOUT");
 
         wv.setInitialScale(145);
     }
 
     private void saveInput() {
-        configKlasse = input_Klasse.getText().toString();
-        configUsername = input_Username.getText().toString();
-        configPassword = input_Password.getText().toString();
+        configKlasse = inputField_Klasse.getText().toString();
+        configUsername = inputField_Username.getText().toString();
+        configPassword = inputField_Password.getText().toString();
 
         saveConfig(
-                input_Username.getText().toString(),
-                input_Password.getText().toString(),
-                input_Klasse.getText().toString()
+                inputField_Username.getText().toString(),
+                inputField_Password.getText().toString(),
+                inputField_Klasse.getText().toString()
         );
     }
 
@@ -235,25 +266,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 LinearLayout configInputLayout = new LinearLayout(this);
                 configInputLayout.setOrientation(LinearLayout.VERTICAL);
 
-                input_Username = new EditText(this);
-                input_Username.setText(configUsername);
-                input_Username.setWidth(400);
-                input_Username.setHint("Benutzername");
+                inputField_Username = new EditText(this);
+                inputField_Username.setText(configUsername);
+                inputField_Username.setWidth(400);
+                inputField_Username.setHint("Benutzername");
 
-                input_Password = new EditText(this);
-                input_Password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                input_Password.setText(configPassword);
-                input_Password.setWidth(400);
-                input_Password.setHint("Passwort");
+                inputField_Password = new EditText(this);
+                inputField_Password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                inputField_Password.setText(configPassword);
+                inputField_Password.setWidth(400);
+                inputField_Password.setHint("Passwort");
 
-                input_Klasse = new EditText(this);
-                input_Klasse.setText(configKlasse);
-                input_Klasse.setWidth(400);
-                input_Klasse.setHint("Klasse");
+                inputField_Klasse = new EditText(this);
+                inputField_Klasse.setText(configKlasse);
+                inputField_Klasse.setWidth(400);
+                inputField_Klasse.setHint("Klasse");
 
-                configInputLayout.addView(input_Username);
-                configInputLayout.addView(input_Password);
-                configInputLayout.addView(input_Klasse);
+                configInputLayout.addView(inputField_Username);
+                configInputLayout.addView(inputField_Password);
+                configInputLayout.addView(inputField_Klasse);
 
                 builder.setView(configInputLayout);
 
@@ -283,14 +314,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.imageButton:
-                if(woche.button_woche!=-1) woche.button_woche--;
+                if(woche.wocheWert !=-1) woche.wocheWert--;
                 woche.displayWoche_msg = true;
                 textView.setText(woche.getWocheString());
                 load_Website();
                 break;
 
             case R.id.imageButton2:
-                if(woche.button_woche!=1) woche.button_woche++;
+                if(woche.wocheWert !=1) woche.wocheWert++;
                 woche.displayWoche_msg = true;
                 textView.setText(woche.getWocheString());
                 load_Website();
