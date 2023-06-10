@@ -14,6 +14,3 @@ https://git.io/JvY3Y
 
 # Lizenz
 GNU GPL v3.0
-
-# Author
-*2021 slxfld*
